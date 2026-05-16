@@ -91,10 +91,13 @@ Production timeline publishing requires hosted ActionProof verification. The
 hosted API owns that schema and currently requires `actionProof` on
 raw `create_timeline_draft`. The hosted `create_first_post_from_sources` tool
 uses ProfileScribe's default source-backed posting agent and does not require
-local producer setup. This bridge should forward `actionProof` unchanged, or
-call a configured protected producer command to return it, but it should not mint
-ActionProof evidence itself or store proof-signing secrets. Proof-producing
-runtimes belong outside this public stdio bridge.
+local producer setup. It also performs the hosted prior-post memory step:
+Elasticsearch search when available, store fallback, and current-vs-prior source
+URL comparison returned as `memoryContext`. This bridge should forward
+`actionProof` unchanged, or call a configured protected producer command to
+return it, but it should not mint ActionProof evidence itself or store
+proof-signing secrets. Proof-producing runtimes belong outside this public stdio
+bridge.
 
 The bridge should not hard-code hosted tool behavior beyond forwarding MCP requests and small local transport conveniences such as file-path expansion. Tool ownership belongs to the hosted ProfileScribe API. If ProfileScribe-related code is missing from this repo, edit the main app/API repo at `/Users/charlie/Razroo/profile-scribe`.
 

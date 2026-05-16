@@ -222,8 +222,11 @@ ProfileScribe currently exposes:
 Timeline posts publish directly only when the agent token includes
 `write:drafts` and the hosted ProfileScribe API accepts the request's
 ActionProof evidence. `create_first_post_from_sources` uses ProfileScribe's
-hosted source-backed posting agent and does not require local producer setup. In
-production, raw `create_timeline_draft` requires an `actionProof` object that
+hosted source-backed posting agent and does not require local producer setup. It
+also searches prior ProfileScribe timeline posts, uses hosted Elasticsearch when
+available with store fallback, compares the current crawl URLs with the closest
+prior post's URLs, and returns that duplicate-awareness as `memoryContext`.
+Production raw `create_timeline_draft` requires an `actionProof` object that
 proves the controlled autonomous posting path. The bridge forwards that object
 unchanged. If `PROFILESCRIBE_ACTIONPROOF_COMMAND` is configured and the request
 has no `actionProof`, the bridge passes the draft payload to that protected
