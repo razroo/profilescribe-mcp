@@ -31,10 +31,14 @@ func TestConfigFromEnvPrefersExplicitMCPURL(t *testing.T) {
 	t.Setenv("PROFILESCRIBE_AGENT_TOKEN", "psagt_test")
 	t.Setenv("PROFILESCRIBE_MCP_URL", " https://example.com/mcp ")
 	t.Setenv("PROFILESCRIBE_API_URL", "http://localhost:8080")
+	t.Setenv("PROFILESCRIBE_ACTIONPROOF_COMMAND", " /usr/local/bin/mint-proof ")
 
 	cfg := ConfigFromEnv().normalized()
 	if cfg.MCPURL != "https://example.com/mcp" {
 		t.Fatalf("MCPURL = %q", cfg.MCPURL)
+	}
+	if cfg.ActionProofCommand != "/usr/local/bin/mint-proof" {
+		t.Fatalf("ActionProofCommand = %q", cfg.ActionProofCommand)
 	}
 }
 

@@ -1,6 +1,7 @@
 package bridge
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -17,7 +18,15 @@ type toolCallParams struct {
 	Arguments json.RawMessage `json:"arguments,omitempty"`
 }
 
-func preparePayload(payload []byte) ([]byte, error) {
+func preparePayload(ctx context.Context, cfg Config, payload []byte) ([]byte, error) {
+	payload, err := prepareUploadPayload(payload)
+	if err != nil {
+		return nil, err
+	}
+	return prepareActionProofPayload(ctx, cfg, payload)
+}
+
+func prepareUploadPayload(payload []byte) ([]byte, error) {
 	var req rpcRequest
 	if err := json.Unmarshal(payload, &req); err != nil {
 		return nil, err

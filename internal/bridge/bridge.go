@@ -50,7 +50,7 @@ func Run(ctx context.Context, cfg Config, input io.Reader, output io.Writer, log
 			continue
 		}
 
-		forwardPayload, err := preparePayload(payload)
+		forwardPayload, err := preparePayload(ctx, cfg, payload)
 		if err != nil {
 			if err := writeMessage(writer, errorResponse(req.ID, -32602, err.Error()), msg.framing); err != nil {
 				return err

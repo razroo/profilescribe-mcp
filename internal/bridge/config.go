@@ -13,9 +13,10 @@ const (
 )
 
 type Config struct {
-	MCPURL     string
-	AgentToken string
-	Timeout    time.Duration
+	MCPURL             string
+	AgentToken         string
+	ActionProofCommand string
+	Timeout            time.Duration
 }
 
 func ConfigFromEnv() Config {
@@ -30,9 +31,10 @@ func ConfigFromEnv() Config {
 	}
 
 	return Config{
-		MCPURL:     mcpURL,
-		AgentToken: strings.TrimSpace(os.Getenv("PROFILESCRIBE_AGENT_TOKEN")),
-		Timeout:    defaultTimeout,
+		MCPURL:             mcpURL,
+		AgentToken:         strings.TrimSpace(os.Getenv("PROFILESCRIBE_AGENT_TOKEN")),
+		ActionProofCommand: strings.TrimSpace(os.Getenv("PROFILESCRIBE_ACTIONPROOF_COMMAND")),
+		Timeout:            defaultTimeout,
 	}
 }
 
@@ -49,6 +51,7 @@ func (c Config) validate() error {
 func (c Config) normalized() Config {
 	c.MCPURL = strings.TrimSpace(c.MCPURL)
 	c.AgentToken = strings.TrimSpace(c.AgentToken)
+	c.ActionProofCommand = strings.TrimSpace(c.ActionProofCommand)
 	if c.Timeout <= 0 {
 		c.Timeout = defaultTimeout
 	}

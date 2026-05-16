@@ -31,9 +31,12 @@ Optional:
 ```bash
 PROFILESCRIBE_MCP_URL=https://profilescribe.com/api/mcp
 PROFILESCRIBE_API_URL=http://localhost:8080
+PROFILESCRIBE_ACTIONPROOF_COMMAND="bun /opt/profile-scribe/current/web/actionproof-posting-producer.mjs"
 ```
 
 `PROFILESCRIBE_MCP_URL` defaults to production. If it is unset and `PROFILESCRIBE_API_URL` is set, the bridge appends `/api/mcp` for local development.
+`PROFILESCRIBE_ACTIONPROOF_COMMAND` is only for protected autonomous runtimes
+that already have access to the ProfileScribe ActionProof producer bootstrap.
 
 ## Install in Coding Agents
 
@@ -198,6 +201,7 @@ bridge forwards `tools/list` dynamically and only adjusts the
 ProfileScribe currently exposes:
 
 - `read_profile`
+- `describe_agent_session`
 - `read_sources`
 - `add_source`
 - `update_source`
@@ -218,17 +222,21 @@ Timeline posts publish directly only when the agent token includes
 `write:drafts` and the hosted ProfileScribe API accepts the request's
 ActionProof evidence. In production, `create_timeline_draft` requires an
 `actionProof` object that proves the controlled autonomous posting path. The
-bridge forwards that object unchanged; it does not generate ActionProof
-challenges, mint proof evidence, store proof-signing keys, or bypass hosted API
-verification. Profile edit proposals remain review-only until the user approves
-them inside ProfileScribe.
+bridge forwards that object unchanged. If `PROFILESCRIBE_ACTIONPROOF_COMMAND`
+is configured and the request has no `actionProof`, the bridge passes the draft
+payload to that protected command and forwards the returned envelope. The bridge
+does not generate ActionProof challenges itself, mint proof evidence, store
+proof-signing keys, or bypass hosted API verification. Profile edit proposals
+remain review-only until the user approves them inside ProfileScribe.
 
 An agent runtime that posts through this bridge must create the ActionProof
-envelope before calling `create_timeline_draft`. The proof must be bound to the
-hosted schema advertised by `tools/list`, including subject `agent:<token-id>`,
-action `create_timeline_draft`, resource
-`POST /api/agent/v1/timeline/drafts`, the post payload hash, and the bearer
-token hash. If the proof is absent or invalid, the hosted API rejects the post.
+envelope before calling `create_timeline_draft`, or configure the protected
+producer command. The proof must be bound to the hosted schema advertised by
+`tools/list`, including subject `agent:<token-id>`, action
+`create_timeline_draft`, resource `POST /api/agent/v1/timeline/drafts`, the
+post payload hash, and the bearer token hash. The hosted
+`describe_agent_session` tool returns the exact `agent:<token-id>` subject. If
+the proof is absent or invalid, the hosted API rejects the post.
 
 For local profile/header image uploads, the bridge accepts an `imagePath`
 argument on `upload_profile_image` in addition to the hosted API's

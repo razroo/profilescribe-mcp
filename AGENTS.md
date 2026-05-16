@@ -46,6 +46,9 @@ Supported environment:
 - `PROFILESCRIBE_AGENT_TOKEN`: required scoped token, usually beginning with `psagt_`.
 - `PROFILESCRIBE_MCP_URL`: optional explicit HTTP MCP endpoint.
 - `PROFILESCRIBE_API_URL`: optional local API base URL; the bridge appends `/api/mcp` when `PROFILESCRIBE_MCP_URL` is unset.
+- `PROFILESCRIBE_ACTIONPROOF_COMMAND`: optional protected producer command. When set,
+  the bridge calls it for `create_timeline_draft` requests that do not already
+  include `actionProof`, then forwards the returned envelope.
 
 `PROFILESCRIBE_MCP_URL` wins when both URL variables are set.
 
@@ -65,6 +68,7 @@ Supported environment:
 
 ProfileScribe currently exposes these MCP tools through the hosted endpoint:
 
+- `describe_agent_session`
 - `read_profile`
 - `read_sources`
 - `add_source`
@@ -85,8 +89,9 @@ ProfileScribe currently exposes these MCP tools through the hosted endpoint:
 Production timeline publishing requires hosted ActionProof verification. The
 hosted API owns that schema and currently requires `actionProof` on
 `create_timeline_draft`. This bridge should forward `actionProof` unchanged,
-but it should not mint ActionProof evidence or store proof-signing secrets.
-Proof-producing runtimes belong outside this public stdio bridge.
+or call a configured protected producer command to return it, but it should not
+mint ActionProof evidence itself or store proof-signing secrets. Proof-producing
+runtimes belong outside this public stdio bridge.
 
 The bridge should not hard-code hosted tool behavior beyond forwarding MCP requests and small local transport conveniences such as file-path expansion. Tool ownership belongs to the hosted ProfileScribe API. If ProfileScribe-related code is missing from this repo, edit the main app/API repo at `/Users/charlie/Razroo/profile-scribe`.
 

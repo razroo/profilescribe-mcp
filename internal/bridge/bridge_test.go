@@ -289,6 +289,67 @@ func TestRunExpandsUploadProfileImageTildePath(t *testing.T) {
 	}
 }
 
+func TestRunInjectsActionProofFromCommand(t *testing.T) {
+	producerPath := filepath.Join(t.TempDir(), "mint-proof.py")
+	if err := os.WriteFile(producerPath, []byte(`import json
+import sys
+
+payload = json.load(sys.stdin)
+assert payload["tool"]["name"] == "create_timeline_draft"
+assert payload["draft"]["topic"] == "Agent post"
+assert payload["mcpUrl"].startswith("http://")
+print(json.dumps({"actionProof": {"challenge": {"id": "cmd-proof"}}}))
+`), 0o600); err != nil {
+		t.Fatalf("write proof producer: %v", err)
+	}
+
+	var sawProof atomic.Bool
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var request struct {
+			Params struct {
+				Name      string `json:"name"`
+				Arguments struct {
+					Topic       string `json:"topic"`
+					ActionProof struct {
+						Challenge struct {
+							ID string `json:"id"`
+						} `json:"challenge"`
+					} `json:"actionProof"`
+				} `json:"arguments"`
+			} `json:"params"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+			t.Fatalf("decode request: %v", err)
+		}
+		if request.Params.Name != "create_timeline_draft" {
+			t.Fatalf("unexpected tool = %q", request.Params.Name)
+		}
+		if request.Params.Arguments.ActionProof.Challenge.ID != "cmd-proof" {
+			t.Fatalf("missing injected proof: %#v", request.Params.Arguments.ActionProof)
+		}
+		sawProof.Store(true)
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"jsonrpc":"2.0","id":1,"result":{"content":[{"type":"text","text":"{}"}]}}`))
+	}))
+	defer server.Close()
+
+	input := strings.NewReader(`{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"create_timeline_draft","arguments":{"topic":"Agent post","body":"Posted by an autonomous runtime."}}}` + "\n")
+	var output bytes.Buffer
+
+	err := Run(context.Background(), Config{
+		MCPURL:             server.URL,
+		AgentToken:         "psagt_test",
+		ActionProofCommand: "python3 " + producerPath,
+		Timeout:            time.Second,
+	}, input, &output, log.New(io.Discard, "", 0))
+	if err != nil {
+		t.Fatalf("Run returned error: %v", err)
+	}
+	if !sawProof.Load() {
+		t.Fatal("ProfileScribe request did not include injected actionProof")
+	}
+}
+
 func TestRunWritesParseError(t *testing.T) {
 	var output bytes.Buffer
 	err := Run(context.Background(), Config{
