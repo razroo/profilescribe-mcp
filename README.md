@@ -226,8 +226,11 @@ ActionProof evidence. `create_first_post_from_sources` is only for bootstrapping
 the profile's first source-backed timeline post and does not require local
 producer setup. For later hosted updates, use
 `create_source_backed_timeline_post` with a specific, meaningful update grounded
-in real work or other verifiable professional evidence. Do not use the
-first-post tool for routine source changes or generic crawl summaries.
+in real work or other verifiable professional evidence. External harnesses can
+pass final `body` and `abstracts` so ProfileScribe verifies approved sources,
+mints hosted ActionProof for that exact draft, and publishes the supplied copy.
+Do not use the first-post tool for routine source changes or generic crawl
+summaries.
 Production raw `create_timeline_draft` requires an `actionProof` object that
 proves the controlled autonomous posting path. The
 bridge forwards that object unchanged. If `PROFILESCRIBE_ACTIONPROOF_COMMAND` is
